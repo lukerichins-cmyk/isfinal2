@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hunter Run</title>
+    <style>
+        :root {
+            --bg-top: #13252f;
+            --bg-bottom: #335b57;
+            --panel: rgba(249, 244, 236, 0.9);
+            --panel-strong: #fffaf3;
+            --ink: #223039;
+            --muted: #586870;
+            --accent: #cb7c52;
+            --accent-dark: #8f4c2c;
+            --line: rgba(34, 48, 57, 0.14);
+            --shadow: 0 18px 45px rgba(13, 23, 29, 0.2);
+            --radius-lg: 28px;
+            --radius-md: 18px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            color: var(--ink);
+            font-family: "Trebuchet MS", "Helvetica Neue", sans-serif;
+            background:
+                radial-gradient(circle at top, rgba(255, 214, 180, 0.18), transparent 28%),
+                linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+        }
+
+        a {
+            color: inherit;
+        }
+
+        .page-shell {
+            width: min(1120px, calc(100% - 2rem));
+            margin: 0 auto;
+            padding: 1.25rem 0 2.5rem;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding: 1rem 1.2rem;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 999px;
+            background: rgba(10, 19, 25, 0.3);
+            backdrop-filter: blur(14px);
+            color: #fff7ed;
+        }
+
+        .topbar a {
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .hero-card,
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+        }
+
+        .hero-card {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 1.5rem;
+            padding: 1.6rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .eyebrow {
+            margin: 0 0 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            font-size: 0.76rem;
+            font-weight: 800;
+            color: var(--accent-dark);
+        }
+
+        h1,
+        h2,
+        h3,
+        p {
+            margin-top: 0;
+        }
+
+        h1,
+        h2 {
+            font-family: Georgia, "Times New Roman", serif;
+        }
+
+        h1 {
+            font-size: clamp(2.7rem, 7vw, 4.9rem);
+            line-height: 0.95;
+            margin-bottom: 0.9rem;
+        }
+
+        h2 {
+            font-size: clamp(1.7rem, 3.7vw, 2.4rem);
+            margin-bottom: 0.6rem;
+        }
+
+        .hero-copy p,
+        .helper-card p,
+        .score-card p {
+            color: var(--muted);
+            line-height: 1.65;
+        }
+
+        .controls {
+            display: grid;
+            gap: 0.8rem;
+        }
+
+        .character-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.85rem;
+            margin: 1rem 0 1.15rem;
+        }
+
+        .character-card {
+            padding: 0.95rem 1rem;
+            text-align: left;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(143, 76, 44, 0.15);
+            background: linear-gradient(180deg, #fffaf3, #f2e5d8);
+            color: var(--ink);
+            box-shadow: none;
+        }
+
+        .character-card.active {
+            color: #fff7ed;
+            background: linear-gradient(135deg, #b56d49, #6d3d24);
+            border-color: rgba(109, 61, 36, 0.4);
+        }
+
+        .character-card strong {
+            display: block;
+            margin-bottom: 0.3rem;
+            font-size: 1rem;
+        }
+
+        .character-card small {
+            display: block;
+            line-height: 1.45;
+            opacity: 0.92;
+        }
+
+        .helper-card {
+            padding: 1rem 1.1rem;
+            border-radius: var(--radius-md);
+            background: linear-gradient(180deg, #fffaf3, #f5ebdf);
+            border: 1px solid rgba(143, 76, 44, 0.12);
+        }
+
+        .helper-card strong {
+            display: block;
+            margin-bottom: 0.2rem;
+        }
+
+        .game-panel {
+            padding: 1rem;
+        }
+
+        .hud {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .score-card {
+            padding: 0.95rem 1rem;
+            border-radius: var(--radius-md);
+            background: var(--panel-strong);
+            border: 1px solid var(--line);
+        }
+
+        .score-card span {
+            display: block;
+            margin-bottom: 0.25rem;
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--accent-dark);
+        }
+
+        .score-card strong {
+            font-size: 1.35rem;
+        }
+
+        .canvas-wrap {
+            position: relative;
+            overflow: hidden;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            background: linear-gradient(180deg, #8fc9d6 0%, #e4ecdd 55%, #586b44 55%, #2d3523 100%);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        .status-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 0.9rem;
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        button {
+            border: 0;
+            border-radius: 999px;
+            padding: 0.85rem 1.15rem;
+            font: inherit;
+            font-weight: 800;
+            cursor: pointer;
+            color: #fff7ed;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            box-shadow: 0 10px 24px rgba(143, 76, 44, 0.26);
+        }
+
+        button.secondary {
+            color: var(--ink);
+            background: #efe1d3;
+            box-shadow: none;
+        }
+
+        @media (max-width: 860px) {
+            .hero-card {
+                grid-template-columns: 1fr;
+            }
+
+            .character-grid,
+            .hud {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .topbar,
+            .status-line {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .page-shell {
+                width: min(100% - 1rem, 1120px);
+            }
+
+            .hero-card,
+            .game-panel {
+                padding: 1rem;
+            }
+
+            .character-grid,
+            .hud {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="page-shell">
+        <nav class="topbar">
+            <a href="index.html">Back to Main Page</a>
+            <div>Space jumps. Up arrow fires. Enter restarts.</div>
+        </nav>
+
+        <section class="hero-card">
+            <div class="hero-copy">
+                <p class="eyebrow">Bonus Page</p>
+                <h1>Hunter Run</h1>
+                <p>
+                    A medieval hunter sprints through a painted countryside, leaping over incoming obstacles
+                    while taking shots at deer in the distance. Now you can choose who survives the run:
+                    the princess, the knight, the wizard, or the hunter, each with a different way to play.
+                </p>
+                <div class="character-grid" id="character-grid">
+                    <button class="character-card active" data-character="hunter" type="button">
+                        <strong>Hunter</strong>
+                        <small>Classic bow shot and twice as many animals crossing the background.</small>
+                    </button>
+                    <button class="character-card" data-character="wizard" type="button">
+                        <strong>Wizard</strong>
+                        <small>Fires a spray of four fireballs with the staff.</small>
+                    </button>
+                    <button class="character-card" data-character="princess" type="button">
+                        <strong>Princess</strong>
+                        <small>Throws a magic potion that charms animals into following her.</small>
+                    </button>
+                    <button class="character-card" data-character="knight" type="button">
+                        <strong>Knight</strong>
+                        <small>Starts mounted with a lance, then fights on foot with a sword after one crash.</small>
+                    </button>
+                </div>
+                <div class="button-row">
+                    <button id="start-button" type="button">Start the Hunt</button>
+                    <button id="restart-button" class="secondary" type="button">Restart</button>
+                </div>
+            </div>
+
+            <div class="controls">
+                <article class="helper-card">
+                    <strong>Space bar</strong>
+                    Jump over carts, bramble piles, and old stone walls. Charmed followers jump too.
+                </article>
+                <article class="helper-card">
+                    <strong>Up arrow</strong>
+                    Use your selected hero ability: bow shot, potion, fireballs, lance, or sword.
+                </article>
+                <article class="helper-card">
+                    <strong>Scoring</strong>
+                    Survive for distance, hit animals for points, and build a little chaos with each class perk.
+                </article>
+            </div>
+        </section>
+
+        <section class="panel game-panel">
+            <div class="hud">
+                <article class="score-card">
+                    <span>Hero</span>
+                    <strong id="hero-value">Hunter</strong>
+                    <p id="hero-caption">Bow ready.</p>
+                </article>
+                <article class="score-card">
+                    <span>Distance</span>
+                    <strong id="distance-value">0</strong>
+                    <p>How far the hunter has traveled.</p>
+                </article>
+                <article class="score-card">
+                    <span>Animals Hit</span>
+                    <strong id="hits-value">0</strong>
+                    <p>Each clean shot adds a bonus.</p>
+                </article>
+                <article class="score-card">
+                    <span>Allies</span>
+                    <strong id="allies-value">0</strong>
+                    <p>Princess followers or knight horse status.</p>
+                </article>
+                <article class="score-card">
+                    <span>Total Score</span>
+                    <strong id="score-value">0</strong>
+                    <p>Distance plus arrow accuracy.</p>
+                </article>
+                <article class="score-card">
+                    <span>State</span>
+                    <strong id="state-value">Waiting</strong>
+                    <p id="state-caption">Press start or tap space to begin.</p>
+                </article>
+            </div>
+
+            <div class="canvas-wrap">
+                <canvas id="game-canvas" width="960" height="420" aria-label="Hunter running game"></canvas>
+            </div>
+
+            <div class="status-line">
+                <div id="message-line">Jump the obstacles, hit the deer, and keep the run alive.</div>
+                <div>Tip: you can hold nothing. Each jump and shot needs timing.</div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const canvas = document.getElementById("game-canvas");
+        const ctx = canvas.getContext("2d");
+
+        const heroValue = document.getElementById("hero-value");
+        const heroCaption = document.getElementById("hero-caption");
+        const distanceValue = document.getElementById("distance-value");
+        const hitsValue = document.getElementById("hits-value");
+        const alliesValue = document.getElementById("allies-value");
+        const scoreValue = document.getElementById("score-value");
+        const stateValue = document.getElementById("state-value");
+        const stateCaption = document.getElementById("state-caption");
+        const messageLine = document.getElementById("message-line");
+        const startButton = document.getElementById("start-button");
+        const restartButton = document.getElementById("restart-button");
+        const characterButtons = [...document.querySelectorAll("[data-character]")];
+
+        const groundY = 328;
+        const horizonY = 215;
+        const gravity = 0.86;
+        const obstacleTypes = [
+            { width: 38, height: 46, kind: "stone" },
+            { width: 60, height: 28, kind: "bramble" },
+            { width: 72, height: 40, kind: "timber" }
+        ];
+        const characters = {
+            hunter: {
+                label: "Hunter",
+                caption: "Bow ready. Twice as many animals appear.",
+                help: "A classic run with more targets crossing the valley.",
+                cooldown: 26
+            },
+            wizard: {
+                label: "Wizard",
+                caption: "Staff charged. Fireballs fan out in a spray.",
+                help: "Four fireballs at once make the sky feel busy fast.",
+                cooldown: 34
+            },
+            princess: {
+                label: "Princess",
+                caption: "Potion ready. Charmed animals become allies.",
+                help: "Followers stack up behind her and leap with each jump.",
+                cooldown: 40
+            },
+            knight: {
+                label: "Knight",
+                caption: "Mounted with lance. One free crash before the real danger.",
+                help: "After losing the horse, only sword arcs can hit animals.",
+                cooldown: 32
+            }
+        };
+        const scenery = {
+            vercors: loadImage("images/VercorsMountains.jpg"),
+            asturias: loadImage("images/northofspain.webp"),
+            annecy: loadImage("images/annecyfrance.avif")
+        };
+
+        const hero = {
+            x: 145,
+            width: 48,
+            height: 76,
+            y: groundY - 76,
+            vy: 0,
+            jumping: false
+        };
+
+        let deer = [];
+        let projectiles = [];
+        let followers = [];
+        let obstacles = [];
+        let particles = [];
+        let selectedCharacter = "hunter";
+        let running = false;
+        let gameOver = false;
+        let lastTime = 0;
+        let obstacleTimer = 0;
+        let deerTimer = 0;
+        let attackCooldown = 0;
+        let distance = 0;
+        let deerHits = 0;
+        let score = 0;
+        let speed = 6.4;
+        let backgroundOffset = 0;
+        let knightMounted = false;
+        let hitGrace = 0;
+        let attackFlash = 0;
+
+        function loadImage(src) {
+            const image = new Image();
+            image.src = src;
+            return image;
+        }
+
+        function setCharacter(characterKey) {
+            selectedCharacter = characterKey;
+            characterButtons.forEach((button) => {
+                button.classList.toggle("active", button.dataset.character === characterKey);
+            });
+            applyCharacterState();
+            if (!running) {
+                updateHud();
+                draw();
+            }
+        }
+
+        function applyCharacterState() {
+            knightMounted = selectedCharacter === "knight";
+            heroValue.textContent = characters[selectedCharacter].label;
+            heroCaption.textContent = characters[selectedCharacter].caption;
+        }
+
+        function resetGame() {
+            hero.y = groundY - hero.height;
+            hero.vy = 0;
+            hero.jumping = false;
+            deer = [];
+            projectiles = [];
+            followers = [];
+            obstacles = [];
+            particles = [];
+            running = false;
+            gameOver = false;
+            lastTime = 0;
+            obstacleTimer = 0;
+            deerTimer = 0;
+            attackCooldown = 0;
+            distance = 0;
+            deerHits = 0;
+            score = 0;
+            speed = 6.4;
+            backgroundOffset = 0;
+            hitGrace = 0;
+            attackFlash = 0;
+            applyCharacterState();
+            stateValue.textContent = "Waiting";
+            stateCaption.textContent = "Pick a hero and press start.";
+            messageLine.textContent = characters[selectedCharacter].help;
+            updateHud();
+            draw();
+        }
+
+        function startGame() {
+            if (!running) {
+                running = true;
+                gameOver = false;
+                stateValue.textContent = "Running";
+                stateCaption.textContent = characters[selectedCharacter].label + " on the move.";
+                messageLine.textContent = characters[selectedCharacter].help;
+                requestAnimationFrame(loop);
+            }
+        }
+
+        function endGame(reason) {
+            running = false;
+            gameOver = true;
+            stateValue.textContent = "Down";
+            stateCaption.textContent = "Press Enter or Restart to try again.";
+            messageLine.textContent = reason || "The run ended, but the road is still there.";
+        }
+
+        function jump() {
+            if (!running) {
+                startGame();
+            }
+
+            if (!hero.jumping && !gameOver) {
+                hero.vy = -15.8;
+                hero.jumping = true;
+                followers.forEach((ally) => {
+                    if (!ally.jumping) {
+                        ally.vy = -14.6;
+                        ally.jumping = true;
+                    }
+                });
+            }
+        }
+
+        function attack() {
+            if (gameOver) {
+                return;
+            }
+
+            if (!running) {
+                startGame();
+            }
+
+            if (attackCooldown > 0) {
+                return;
+            }
+
+            if (selectedCharacter === "hunter") {
+                projectiles.push(makeProjectile("arrow", hero.x + hero.width - 4, hero.y + 28, 12.2, 0, 36, 5));
+            } else if (selectedCharacter === "wizard") {
+                [-18, -6, 6, 18].forEach((offset, index) => {
+                    projectiles.push(makeProjectile("fireball", hero.x + hero.width - 2, hero.y + 26 + offset * 0.35, 9.8 + index * 0.3, offset * 0.06, 18, 18));
+                });
+            } else if (selectedCharacter === "princess") {
+                projectiles.push(makeProjectile("potion", hero.x + hero.width - 2, hero.y + 24, 8.4, -2.8, 18, 18, 0.16));
+            } else if (selectedCharacter === "knight") {
+                if (knightMounted) {
+                    projectiles.push(makeProjectile("lance", hero.x + hero.width + 4, hero.y + 32, 10.4, 0, 84, 10));
+                    attackFlash = 10;
+                } else {
+                    projectiles.push(makeProjectile("sword", hero.x + hero.width + 2, hero.y + 34, 7.2, 0, 52, 24, 0, 16));
+                    attackFlash = 12;
+                }
+            }
+
+            attackCooldown = characters[selectedCharacter].cooldown;
+        }
+
+        function makeProjectile(kind, x, y, vx, vy, width, height, gravityValue = 0, life = 120) {
+            return { kind, x, y, vx, vy, width, height, gravity: gravityValue, life };
+        }
+
+        function spawnObstacle() {
+            const type = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
+            obstacles.push({
+                x: canvas.width + 20,
+                width: type.width,
+                height: type.height,
+                y: groundY - type.height,
+                kind: type.kind
+            });
+        }
+
+        function spawnDeerWave() {
+            const count = selectedCharacter === "hunter" ? 2 : 1;
+            for (let i = 0; i < count; i += 1) {
+                deer.push({
+                    x: canvas.width + 80 + i * 82,
+                    y: 182 + Math.random() * 44,
+                    width: 54,
+                    height: 34,
+                    vx: speed * (0.62 + Math.random() * 0.12) + 1.2
+                });
+            }
+        }
+
+        function update(delta) {
+            backgroundOffset -= speed * delta * 0.06;
+            speed += delta * 0.00014;
+            distance += speed * delta * 0.045;
+            obstacleTimer += delta;
+            deerTimer += delta;
+
+            if (attackCooldown > 0) {
+                attackCooldown -= delta * 0.06;
+            }
+            if (hitGrace > 0) {
+                hitGrace -= delta * 0.06;
+            }
+            if (attackFlash > 0) {
+                attackFlash -= delta * 0.06;
+            }
+
+            hero.vy += gravity;
+            hero.y += hero.vy;
+            if (hero.y >= groundY - hero.height) {
+                hero.y = groundY - hero.height;
+                hero.vy = 0;
+                hero.jumping = false;
+            }
+
+            followers.forEach((ally, index) => {
+                const targetX = hero.x - 42 - index * 30;
+                ally.x += (targetX - ally.x) * 0.12;
+                ally.vy += gravity * 0.9;
+                ally.y += ally.vy;
+                if (ally.y >= groundY - ally.height + 6) {
+                    ally.y = groundY - ally.height + 6;
+                    ally.vy = 0;
+                    ally.jumping = false;
+                }
+            });
+
+            if (obstacleTimer > Math.max(760, 1450 - speed * 45)) {
+                spawnObstacle();
+                obstacleTimer = 0;
+            }
+
+            if (deerTimer > 1400 + Math.random() * 900) {
+                spawnDeerWave();
+                deerTimer = 0;
+            }
+
+            obstacles.forEach((obstacle) => {
+                obstacle.x -= speed;
+            });
+            obstacles = obstacles.filter((obstacle) => obstacle.x + obstacle.width > -40);
+
+            deer.forEach((animal) => {
+                animal.x -= animal.vx;
+            });
+            deer = deer.filter((animal) => animal.x + animal.width > -60);
+
+            projectiles.forEach((projectile) => {
+                projectile.x += projectile.vx;
+                projectile.y += projectile.vy;
+                projectile.vy += projectile.gravity || 0;
+                projectile.life -= 1;
+            });
+            projectiles = projectiles.filter((projectile) =>
+                projectile.life > 0 &&
+                projectile.x < canvas.width + 60 &&
+                projectile.y < canvas.height + 60 &&
+                projectile.y > -60
+            );
+
+            particles.forEach((particle) => {
+                particle.x += particle.vx;
+                particle.y += particle.vy;
+                particle.life -= 1;
+            });
+            particles = particles.filter((particle) => particle.life > 0);
+
+            checkObstacleHits();
+            checkProjectileHits();
+
+            score = Math.floor(distance) + deerHits * 80 + followers.length * 35 + (knightMounted ? 20 : 0);
+            updateHud();
+        }
+
+        function checkObstacleHits() {
+            if (hitGrace > 0) {
+                return;
+            }
+
+            for (let i = 0; i < obstacles.length; i += 1) {
+                const obstacle = obstacles[i];
+                if (!isColliding(hero, obstacle, 8)) {
+                    continue;
+                }
+
+                if (selectedCharacter === "knight" && knightMounted) {
+                    knightMounted = false;
+                    hitGrace = 24;
+                    obstacles.splice(i, 1);
+                    burst(hero.x + 36, hero.y + 34, "#f5d7ab");
+                    messageLine.textContent = "The knight lost the horse and lance. Sword only now.";
+                    stateCaption.textContent = "Knight on foot.";
+                    return;
+                }
+
+                endGame("That obstacle ended the run. The trail wins this round.");
+                return;
+            }
+        }
+
+        function checkProjectileHits() {
+            for (let p = projectiles.length - 1; p >= 0; p -= 1) {
+                const projectile = projectiles[p];
+                for (let d = deer.length - 1; d >= 0; d -= 1) {
+                    const animal = deer[d];
+                    if (!rectHit(projectile, animal)) {
+                        continue;
+                    }
+
+                    if (projectile.kind === "potion") {
+                        followers.push({
+                            x: hero.x - 40 - followers.length * 28,
+                            y: groundY - 28,
+                            width: 38,
+                            height: 28,
+                            vy: 0,
+                            jumping: false
+                        });
+                        burst(animal.x + animal.width / 2, animal.y + animal.height / 2, "#df93c4");
+                        messageLine.textContent = "The princess charmed another animal into the party.";
+                    } else {
+                        deerHits += 1;
+                        burst(animal.x + animal.width / 2, animal.y + animal.height / 2, projectile.kind === "fireball" ? "#f4a24d" : "#fff0c8");
+                    }
+
+                    deer.splice(d, 1);
+                    projectiles.splice(p, 1);
+                    break;
+                }
+            }
+        }
+
+        function burst(x, y, color) {
+            for (let i = 0; i < 12; i += 1) {
+                particles.push({
+                    x,
+                    y,
+                    vx: (Math.random() - 0.5) * 3.8,
+                    vy: (Math.random() - 0.5) * 3.8,
+                    life: 18 + Math.random() * 10,
+                    color: color || "rgba(255, 242, 214, 0.7)"
+                });
+            }
+        }
+
+        function isColliding(a, b, inset) {
+            return (
+                a.x + inset < b.x + b.width &&
+                a.x + a.width - inset > b.x &&
+                a.y + inset < b.y + b.height &&
+                a.y + a.height - inset > b.y
+            );
+        }
+
+        function rectHit(a, b) {
+            return (
+                a.x < b.x + b.width &&
+                a.x + a.width > b.x &&
+                a.y < b.y + b.height &&
+                a.y + a.height > b.y
+            );
+        }
+
+        function updateHud() {
+            heroValue.textContent = characters[selectedCharacter].label;
+            heroCaption.textContent = selectedCharacter === "knight" && !knightMounted
+                ? "Horse gone. Sword only."
+                : characters[selectedCharacter].caption;
+            distanceValue.textContent = Math.floor(distance);
+            hitsValue.textContent = deerHits;
+            alliesValue.textContent = selectedCharacter === "princess"
+                ? followers.length
+                : (selectedCharacter === "knight" ? (knightMounted ? "Horse" : "Foot") : "0");
+            scoreValue.textContent = score;
+        }
+
+        function drawCoverImage(image, x, y, width, height, alpha) {
+            if (!image.complete || !image.naturalWidth) {
+                return;
+            }
+
+            const imageRatio = image.naturalWidth / image.naturalHeight;
+            const boxRatio = width / height;
+            let sx = 0;
+            let sy = 0;
+            let sw = image.naturalWidth;
+            let sh = image.naturalHeight;
+
+            if (imageRatio > boxRatio) {
+                sw = image.naturalHeight * boxRatio;
+                sx = (image.naturalWidth - sw) / 2;
+            } else {
+                sh = image.naturalWidth / boxRatio;
+                sy = (image.naturalHeight - sh) / 2;
+            }
+
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.drawImage(image, sx, sy, sw, sh, x, y, width, height);
+            ctx.restore();
+        }
+
+        function drawParallaxStrip(image, y, height, alpha, rate) {
+            if (!image.complete || !image.naturalWidth) {
+                return;
+            }
+
+            const drawWidth = height * (image.naturalWidth / image.naturalHeight);
+            const offset = (backgroundOffset * rate) % drawWidth;
+
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            for (let x = offset - drawWidth; x < canvas.width + drawWidth; x += drawWidth) {
+                ctx.drawImage(image, x, y, drawWidth, height);
+            }
+            ctx.restore();
+        }
+
+        function drawSky() {
+            const sky = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            sky.addColorStop(0, "#7cb5cf");
+            sky.addColorStop(0.45, "#dce9e3");
+            sky.addColorStop(0.451, "#71855d");
+            sky.addColorStop(1, "#2a3221");
+            ctx.fillStyle = sky;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            drawCoverImage(scenery.vercors, 0, 0, canvas.width, 188, 0.82);
+
+            const skyWash = ctx.createLinearGradient(0, 0, 0, 190);
+            skyWash.addColorStop(0, "rgba(18, 34, 48, 0.24)");
+            skyWash.addColorStop(0.6, "rgba(243, 211, 173, 0.12)");
+            skyWash.addColorStop(1, "rgba(255, 255, 255, 0)");
+            ctx.fillStyle = skyWash;
+            ctx.fillRect(0, 0, canvas.width, 190);
+
+            ctx.fillStyle = "rgba(255, 242, 213, 0.78)";
+            ctx.beginPath();
+            ctx.arc(788, 72, 34, 0, Math.PI * 2);
+            ctx.fill();
+
+            for (let i = 0; i < 5; i += 1) {
+                const x = (backgroundOffset * 0.08 + i * 210) % (canvas.width + 240) - 120;
+                drawCloud(x, 62 + (i % 2) * 18);
+            }
+
+            drawParallaxStrip(scenery.asturias, 142, 86, 0.42, 0.12);
+            drawParallaxStrip(scenery.annecy, 164, 62, 0.3, 0.18);
+
+            ctx.fillStyle = "rgba(34, 55, 45, 0.28)";
+            ctx.fillRect(0, 176, canvas.width, 54);
+        }
+
+        function drawCloud(x, y) {
+            ctx.fillStyle = "rgba(255, 255, 255, 0.34)";
+            ctx.beginPath();
+            ctx.arc(x, y, 18, 0, Math.PI * 2);
+            ctx.arc(x + 20, y - 6, 20, 0, Math.PI * 2);
+            ctx.arc(x + 40, y, 16, 0, Math.PI * 2);
+            ctx.arc(x + 18, y + 8, 24, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawTrees() {
+            for (let i = 0; i < 10; i += 1) {
+                const x = (backgroundOffset * 0.85 + i * 120) % (canvas.width + 120) - 40;
+                ctx.fillStyle = "#314128";
+                ctx.fillRect(x + 14, horizonY + 10, 5, 32);
+                ctx.beginPath();
+                ctx.moveTo(x, horizonY + 24);
+                ctx.lineTo(x + 16, horizonY - 20);
+                ctx.lineTo(x + 32, horizonY + 24);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        function drawGround() {
+            const meadow = ctx.createLinearGradient(0, horizonY, 0, groundY);
+            meadow.addColorStop(0, "#72845c");
+            meadow.addColorStop(0.55, "#586843");
+            meadow.addColorStop(1, "#435031");
+            ctx.fillStyle = meadow;
+            ctx.fillRect(0, horizonY, canvas.width, groundY - horizonY);
+
+            const path = ctx.createLinearGradient(0, groundY, 0, canvas.height);
+            path.addColorStop(0, "#544836");
+            path.addColorStop(1, "#2e2a20");
+            ctx.fillStyle = path;
+            ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
+
+            ctx.strokeStyle = "rgba(249, 244, 236, 0.18)";
+            ctx.lineWidth = 2;
+            ctx.setLineDash([18, 14]);
+            ctx.beginPath();
+            ctx.moveTo(0, groundY + 36);
+            ctx.lineTo(canvas.width, groundY + 36);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            for (let i = 0; i < 20; i += 1) {
+                const x = (backgroundOffset * 1.3 + i * 60) % (canvas.width + 60) - 20;
+                drawGrassCluster(x, groundY - 4);
+            }
+
+            for (let i = 0; i < 16; i += 1) {
+                const x = (backgroundOffset * 0.95 + i * 70) % (canvas.width + 80) - 18;
+                drawWildflower(x, groundY - 12 - (i % 3) * 2);
+            }
+        }
+
+        function drawGrassCluster(x, y) {
+            ctx.strokeStyle = "#8ea067";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(x, y + 7);
+            ctx.lineTo(x + 4, y - 5);
+            ctx.moveTo(x + 6, y + 8);
+            ctx.lineTo(x + 9, y - 2);
+            ctx.moveTo(x + 12, y + 7);
+            ctx.lineTo(x + 10, y - 4);
+            ctx.stroke();
+        }
+
+        function drawWildflower(x, y) {
+            ctx.fillStyle = "#5f6e45";
+            ctx.fillRect(x + 3, y + 4, 2, 8);
+            ctx.fillStyle = (Math.floor(x) % 2 === 0) ? "#f0d694" : "#dca0a6";
+            ctx.beginPath();
+            ctx.arc(x + 4, y + 2, 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawHero() {
+            if (selectedCharacter === "hunter") {
+                drawHunter();
+            } else if (selectedCharacter === "wizard") {
+                drawWizard();
+            } else if (selectedCharacter === "princess") {
+                drawPrincess();
+            } else {
+                drawKnight();
+            }
+        }
+
+        function drawBaseHead(x, y, hoodColor) {
+            ctx.fillStyle = "#d3a889";
+            ctx.beginPath();
+            ctx.arc(x + 23, y + 10, 10, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = hoodColor;
+            ctx.beginPath();
+            ctx.moveTo(x + 14, y + 8);
+            ctx.lineTo(x + 22, y - 8);
+            ctx.lineTo(x + 33, y + 7);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawLegs(x, y) {
+            ctx.strokeStyle = "#3c2b20";
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(x + 18, y + 48);
+            ctx.lineTo(x + 14, y + 72);
+            ctx.moveTo(x + 28, y + 48);
+            ctx.lineTo(x + 35, y + 72);
+            ctx.stroke();
+            ctx.fillStyle = "#2d2219";
+            ctx.fillRect(x + 11, y + 70, 10, 5);
+            ctx.fillRect(x + 29, y + 70, 10, 5);
+        }
+
+        function drawHunter() {
+            const x = hero.x;
+            const y = hero.y;
+            drawBaseHead(x, y, "#3b2a1b");
+            ctx.fillStyle = "#6b4730";
+            ctx.fillRect(x + 13, y + 20, 20, 26);
+            ctx.fillStyle = "#546746";
+            ctx.beginPath();
+            ctx.moveTo(x + 13, y + 20);
+            ctx.lineTo(x + 35, y + 20);
+            ctx.lineTo(x + 28, y + 54);
+            ctx.lineTo(x + 10, y + 48);
+            ctx.closePath();
+            ctx.fill();
+            ctx.fillStyle = "#8d5f3c";
+            ctx.fillRect(x + 8, y + 24, 8, 24);
+            ctx.fillRect(x + 29, y + 24, 8, 24);
+            drawLegs(x, y);
+            ctx.strokeStyle = "#8f6237";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(x + 46, y + 38, 10, Math.PI / 2, Math.PI * 1.5);
+            ctx.stroke();
+            ctx.strokeStyle = "#d9c0a0";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(x + 46, y + 28);
+            ctx.lineTo(x + 46, y + 48);
+            ctx.stroke();
+        }
+
+        function drawWizard() {
+            const x = hero.x;
+            const y = hero.y;
+            drawBaseHead(x, y, "#49366a");
+            ctx.fillStyle = "#6b4db3";
+            ctx.beginPath();
+            ctx.moveTo(x + 11, y + 20);
+            ctx.lineTo(x + 35, y + 20);
+            ctx.lineTo(x + 31, y + 54);
+            ctx.lineTo(x + 8, y + 54);
+            ctx.closePath();
+            ctx.fill();
+            drawLegs(x, y);
+            ctx.strokeStyle = "#7d5a32";
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(x + 40, y + 16);
+            ctx.lineTo(x + 44, y + 48);
+            ctx.stroke();
+            ctx.fillStyle = "#f2a54b";
+            ctx.beginPath();
+            ctx.arc(x + 44, y + 16, 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawPrincess() {
+            const x = hero.x;
+            const y = hero.y;
+            drawBaseHead(x, y, "#8a4767");
+            ctx.fillStyle = "#d28cb2";
+            ctx.beginPath();
+            ctx.moveTo(x + 12, y + 20);
+            ctx.lineTo(x + 34, y + 20);
+            ctx.lineTo(x + 40, y + 54);
+            ctx.lineTo(x + 6, y + 54);
+            ctx.closePath();
+            ctx.fill();
+            drawLegs(x, y);
+            ctx.fillStyle = "#d7b24a";
+            ctx.beginPath();
+            ctx.moveTo(x + 17, y + 0);
+            ctx.lineTo(x + 21, y - 6);
+            ctx.lineTo(x + 25, y + 0);
+            ctx.lineTo(x + 29, y - 6);
+            ctx.lineTo(x + 32, y + 0);
+            ctx.closePath();
+            ctx.fill();
+            ctx.fillStyle = "#865d3f";
+            ctx.beginPath();
+            ctx.arc(x + 42, y + 34, 7, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawHorse(x, y) {
+            ctx.fillStyle = "#705239";
+            ctx.beginPath();
+            ctx.ellipse(x + 24, y + 44, 28, 16, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillRect(x + 42, y + 26, 18, 12);
+            ctx.fillRect(x + 54, y + 20, 8, 10);
+            ctx.fillRect(x + 10, y + 54, 5, 28);
+            ctx.fillRect(x + 23, y + 54, 5, 28);
+            ctx.fillRect(x + 38, y + 54, 5, 28);
+            ctx.fillRect(x + 50, y + 54, 5, 28);
+            ctx.strokeStyle = "#4f3724";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(x + 2, y + 38);
+            ctx.lineTo(x - 8, y + 22);
+            ctx.stroke();
+        }
+
+        function drawKnight() {
+            const x = hero.x;
+            const y = hero.y;
+            if (knightMounted) {
+                drawHorse(x - 10, y - 6);
+            }
+            drawBaseHead(x, y, "#474b5f");
+            ctx.fillStyle = "#95a0b4";
+            ctx.fillRect(x + 13, y + 20, 20, 24);
+            ctx.fillStyle = "#ab3d33";
+            ctx.fillRect(x + 18, y + 24, 9, 20);
+            drawLegs(x, y);
+            ctx.strokeStyle = "#d4c18a";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            if (knightMounted) {
+                ctx.moveTo(x + 40, y + 24);
+                ctx.lineTo(x + 80, y + 12);
+            } else {
+                ctx.moveTo(x + 37, y + 30);
+                ctx.lineTo(x + 58, y + 36);
+                ctx.moveTo(x + 53, y + 28);
+                ctx.lineTo(x + 59, y + 36);
+                ctx.lineTo(x + 52, y + 43);
+            }
+            ctx.stroke();
+        }
+
+        function drawObstacle(obstacle) {
+            if (obstacle.kind === "stone") {
+                ctx.fillStyle = "#7a7b75";
+                ctx.beginPath();
+                ctx.moveTo(obstacle.x + 3, obstacle.y + obstacle.height);
+                ctx.lineTo(obstacle.x + 8, obstacle.y + 12);
+                ctx.lineTo(obstacle.x + 18, obstacle.y + 3);
+                ctx.lineTo(obstacle.x + 29, obstacle.y + 9);
+                ctx.lineTo(obstacle.x + 35, obstacle.y + obstacle.height);
+                ctx.closePath();
+                ctx.fill();
+                ctx.fillStyle = "#a2a49d";
+                ctx.fillRect(obstacle.x + 11, obstacle.y + 14, 7, 5);
+                ctx.fillRect(obstacle.x + 19, obstacle.y + 22, 8, 4);
+            } else if (obstacle.kind === "bramble") {
+                ctx.fillStyle = "#4c3d2a";
+                ctx.beginPath();
+                ctx.moveTo(obstacle.x, obstacle.y + obstacle.height);
+                ctx.lineTo(obstacle.x + 10, obstacle.y + 8);
+                ctx.lineTo(obstacle.x + 22, obstacle.y + obstacle.height);
+                ctx.lineTo(obstacle.x + 33, obstacle.y + 4);
+                ctx.lineTo(obstacle.x + 45, obstacle.y + obstacle.height);
+                ctx.lineTo(obstacle.x + obstacle.width, obstacle.y + 14);
+                ctx.lineTo(obstacle.x + obstacle.width, obstacle.y + obstacle.height);
+                ctx.closePath();
+                ctx.fill();
+            } else {
+                ctx.fillStyle = "#76583c";
+                ctx.fillRect(obstacle.x + 5, obstacle.y + 14, obstacle.width - 10, 9);
+                ctx.fillStyle = "#6a4b32";
+                ctx.fillRect(obstacle.x, obstacle.y + 19, obstacle.width, 8);
+                ctx.fillStyle = "#4d3523";
+                ctx.beginPath();
+                ctx.arc(obstacle.x + 12, obstacle.y + 27, 8, 0, Math.PI * 2);
+                ctx.arc(obstacle.x + obstacle.width - 12, obstacle.y + 27, 8, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function drawDeer(animal, x = animal.x, y = animal.y, scale = 1, glow = false) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(scale, scale);
+            if (glow) {
+                ctx.shadowColor = "rgba(233, 140, 188, 0.55)";
+                ctx.shadowBlur = 12;
+            }
+            ctx.fillStyle = glow ? "#c78faa" : "#9b6b49";
+            ctx.beginPath();
+            ctx.ellipse(22, 16, 14, 9, -0.15, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillRect(30, 8, 14, 8);
+            ctx.fillRect(40, 4, 7, 7);
+            ctx.fillRect(16, 22, 3, 15);
+            ctx.fillRect(25, 22, 3, 15);
+            ctx.fillRect(34, 17, 3, 18);
+            ctx.fillRect(10, 18, 3, 18);
+            ctx.strokeStyle = glow ? "#f2d8e7" : "#6c462d";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(46, 2);
+            ctx.lineTo(50, -7);
+            ctx.moveTo(46, 2);
+            ctx.lineTo(42, -7);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawProjectile(projectile) {
+            if (projectile.kind === "fireball") {
+                ctx.fillStyle = "#f39a3b";
+                ctx.beginPath();
+                ctx.arc(projectile.x, projectile.y, 7, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = "#ffe1a7";
+                ctx.beginPath();
+                ctx.arc(projectile.x + 1, projectile.y - 1, 3, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (projectile.kind === "potion") {
+                ctx.fillStyle = "#d58fc0";
+                ctx.beginPath();
+                ctx.arc(projectile.x, projectile.y, 7, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = "#f5e3ef";
+                ctx.fillRect(projectile.x - 3, projectile.y - 10, 6, 5);
+            } else if (projectile.kind === "lance") {
+                ctx.strokeStyle = "#d9c78d";
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(projectile.x, projectile.y);
+                ctx.lineTo(projectile.x + projectile.width, projectile.y - 6);
+                ctx.stroke();
+            } else if (projectile.kind === "sword") {
+                ctx.strokeStyle = "#dce0eb";
+                ctx.lineWidth = 6;
+                ctx.beginPath();
+                ctx.arc(projectile.x, projectile.y, 28, -0.9, 0.7);
+                ctx.stroke();
+            } else {
+                ctx.strokeStyle = "#5c3a1f";
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(projectile.x, projectile.y);
+                ctx.lineTo(projectile.x + projectile.width, projectile.y);
+                ctx.stroke();
+                ctx.fillStyle = "#d7d3cb";
+                ctx.beginPath();
+                ctx.moveTo(projectile.x + projectile.width, projectile.y);
+                ctx.lineTo(projectile.x + projectile.width - 8, projectile.y - 4);
+                ctx.lineTo(projectile.x + projectile.width - 8, projectile.y + 4);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        function drawFollowers() {
+            followers.forEach((ally) => {
+                drawDeer(ally, ally.x, ally.y, 0.74, true);
+            });
+        }
+
+        function drawParticles() {
+            particles.forEach((particle) => {
+                ctx.fillStyle = particle.color || "rgba(255, 242, 214, 0.7)";
+                ctx.beginPath();
+                ctx.arc(particle.x, particle.y, 2.2, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function drawOverlay() {
+            if (!running) {
+                ctx.fillStyle = gameOver ? "rgba(20, 14, 10, 0.28)" : "rgba(17, 23, 28, 0.18)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.textAlign = "center";
+                ctx.fillStyle = "#fff6eb";
+                ctx.font = "700 38px Georgia";
+                ctx.fillText(gameOver ? "The Hunt Ends Here" : "Choose a Hero and Start", canvas.width / 2, 120);
+                ctx.font = "20px Trebuchet MS";
+                ctx.fillText(gameOver ? "Enter restarts the run." : "Space jumps. Up arrow uses the selected ability.", canvas.width / 2, 158);
+            }
+        }
+
+        function draw() {
+            drawSky();
+            drawTrees();
+            deer.forEach((animal) => drawDeer(animal));
+            drawGround();
+            obstacles.forEach(drawObstacle);
+            drawFollowers();
+            projectiles.forEach(drawProjectile);
+            drawHero();
+            if (selectedCharacter === "knight" && attackFlash > 0 && !knightMounted) {
+                ctx.strokeStyle = "rgba(255,255,255,0.28)";
+                ctx.lineWidth = 8;
+                ctx.beginPath();
+                ctx.arc(hero.x + 44, hero.y + 34, 28, -0.9, 0.7);
+                ctx.stroke();
+            }
+            drawParticles();
+            drawOverlay();
+        }
+
+        function loop(timestamp) {
+            if (!running) {
+                draw();
+                return;
+            }
+
+            if (!lastTime) {
+                lastTime = timestamp;
+            }
+
+            const delta = Math.min(32, timestamp - lastTime);
+            lastTime = timestamp;
+
+            update(delta);
+            draw();
+
+            if (running) {
+                requestAnimationFrame(loop);
+            }
+        }
+
+        window.addEventListener("keydown", (event) => {
+            if (event.code === "Space") {
+                event.preventDefault();
+                if (gameOver) {
+                    resetGame();
+                    startGame();
+                }
+                jump();
+            } else if (event.code === "ArrowUp") {
+                event.preventDefault();
+                attack();
+            } else if (event.code === "Enter") {
+                event.preventDefault();
+                resetGame();
+                startGame();
+            }
+        });
+
+        characterButtons.forEach((button) => {
+            button.addEventListener("click", () => {
+                if (running) {
+                    messageLine.textContent = "Finish the current run before switching heroes.";
+                    return;
+                }
+                setCharacter(button.dataset.character);
+                if (gameOver) {
+                    resetGame();
+                }
+            });
+        });
+
+        startButton.addEventListener("click", () => {
+            if (gameOver) {
+                resetGame();
+            }
+            startGame();
+        });
+
+        restartButton.addEventListener("click", () => {
+            resetGame();
+            startGame();
+        });
+
+        resetGame();
+    </script>
+</body>
+</html>
